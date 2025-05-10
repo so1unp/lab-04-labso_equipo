@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
 void usage(char *argv[])
 {
@@ -27,13 +29,37 @@ int main(int argc, char *argv[])
     }
 
     char option = argv[1][1];
-
+    sem_t *semaforo;
     switch(option) {
         case 'c':
+            if (argc < 4) {
+                usage(argv);
+                exit(EXIT_FAILURE);
+            }
+           if((semaforo=sem_open(argv[2], O_CREAT, 0644, atoi(argv[3])))==(sem_t*)-1) {
+               perror("No se puede crear el semáforo"); exit(1); 
+            }
+            printf("Semáforo %s creado con valor %d\n", argv[2], argv[3]);
+            sem_close(semaforo);
             break;
         case 'u':
             break;
         case 'd':
+            if (argc < 3) {
+                fprintf(stderr, "Falta el nombre del semáforo. Uso: %s -d nombre\n", argv[0]);
+                exit(EXIT_FAILURE);
+            }
+    
+            if((semaforo=sem_open(argv[2], 0, 0644, 1))==(sem_t *)-1) {
+                printf("No se encuentra el semáforo %s",argv[1]); 
+                exit(1);
+            }
+            // sem_close(semaforo);
+            /* Remove named semaphore NAME. */
+            if (sem_unlink(argv[2]) < 0) {
+                printf("error al cerrar el semáforo %s",argv[1]); 
+                exit(1);
+            }
             break;
         case 'b':
             break;
