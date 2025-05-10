@@ -29,41 +29,77 @@ int main(int argc, char *argv[])
     }
 
     char option = argv[1][1];
+
     sem_t *semaforo;
+    int value;
+
     switch(option) {
         case 'c':
             if (argc < 4) {
                 usage(argv);
                 exit(EXIT_FAILURE);
             }
-           if((semaforo=sem_open(argv[2], O_CREAT, 0644, atoi(argv[3])))==(sem_t*)-1) {
-               perror("No se puede crear el semáforo"); exit(1); 
+            value = atoi(argv[3]);
+            if((semaforo=sem_open(argv[2], O_CREAT | O_EXCL, 0644, value))==SEM_FAILED) {
+               perror("No se puede crear el semáforo"); 
+               exit(1); 
             }
-            printf("Semáforo %s creado con valor %d\n", argv[2], argv[3]);
+            printf("Semáforo %s creado con valor %i \n", argv[2], atoi(argv[3]));
             sem_close(semaforo);
             break;
         case 'u':
+            if (argc < 3) {
+                fprintf(stderr, "Falta el nombre del semáforo. Uso: %s -u nombre\n", argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            // abrir el semaforo
+            if((semaforo=sem_open(argv[2], 0))==SEM_FAILED) {
+                fprintf(stderr,"No se pudo abrir el semáforo: %s",argv[2]);
+                exit(EXIT_FAILURE);
+            }
+            // logica de modificar
+            printf("Hace UP del semáforo\n");
+            sem_post(semaforo);
+            printf("Cierra semaforos y termina\n");
+            sem_close(semaforo);
             break;
         case 'd':
             if (argc < 3) {
                 fprintf(stderr, "Falta el nombre del semáforo. Uso: %s -d nombre\n", argv[0]);
                 exit(EXIT_FAILURE);
             }
-    
-            if((semaforo=sem_open(argv[2], 0, 0644, 1))==(sem_t *)-1) {
-                printf("No se encuentra el semáforo %s",argv[1]); 
-                exit(1);
+            // abrir el semaforo
+            if((semaforo=sem_open(argv[2],0))==SEM_FAILED) {
+                fprintf(stderr,"No se pudo abrir el semáforo: %s",argv[2]);
+                exit(EXIT_FAILURE);
             }
-            // sem_close(semaforo);
-            /* Remove named semaphore NAME. */
-            if (sem_unlink(argv[2]) < 0) {
-                printf("error al cerrar el semáforo %s",argv[1]); 
-                exit(1);
-            }
+            // logica de modificar
+            printf("Hace DOWN del semáforo\n");
+            sem_wait(semaforo);
+            printf("Cierra semaforos y termina\n");
+            sem_close(semaforo);
             break;
         case 'b':
+            if (argc < 3) {
+                fprintf(stderr, "Falta el nombre del semáforo. Uso: %s -b nombre\n", argv[0]);
+                exit(EXIT_FAILURE);
+            }
+            if (sem_unlink(argv[2]) < 0) {
+                fprintf(stderr,"error al borrar el semáforo %s",argv[2]); 
+                exit(EXIT_FAILURE);
+            }
+            printf("Semaforo %s eliminado\n",argv[2]);
             break;
         case 'i':
+            // abrir el semaforo
+            if((semaforo=sem_open(argv[2], 0))==SEM_FAILED) {
+                fprintf(stderr,"No se pudo abrir el semáforo: %s",argv[2]);
+                exit(EXIT_FAILURE);
+            }
+            // consulta estado
+            sem_getvalue(semaforo,&value);
+            printf("El valor del semáforo %s es %d \n",argv[2],value);
+            sem_close(semaforo);         
             break;
         case 'h':
             usage(argv);
