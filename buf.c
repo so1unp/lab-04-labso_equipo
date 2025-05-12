@@ -10,6 +10,10 @@
 #include <math.h>
 #include <semaphore.h>
 
+sem_t empty; 
+sem_t full;
+pthread_mutex_t mutex  = PTHREAD_MUTEX_INITIALIZER;
+// pthread_mutexattr_t     attr; // NO SE USA
 static void* producer(void*);
 static void* consumer(void*);
 
@@ -133,10 +137,33 @@ int main(int argc, char** argv)
     // Inicializa semilla para números pseudo-aleatorios.
     srand(getpid());
 
+    // Inicializar un semáforo: sem_init()
+    sem_init(&full,0,0); // semaforo llenos inicial = 0
+    sem_init(&empty,0,buf->size);  // semaforo vacios inicial = size buffer
+    // Crear un mutex: pthread_mutex_init()
+    pthread_mutex_init(&mutex, NULL);
+
     // Crea productor y consumidor
     pthread_create(&producer_t, NULL, producer, params);
     pthread_create(&consumer_t, NULL, consumer, params);
 
+    // despues de crear los hilos producer y consumer
+
+
+    
+    // consumidor
+    //  down(llenos) -> retira item
+    // up(vacios) -> vuelve a down
+    // productor
+    // produce el item -> down (vacios)
+    // pone item en *buffer -> up(llenos)
+
+
+    // Eliminar un semáforo: sem_destroy()
+    sem_destroy(&full);
+    sem_destroy(&empty);
+    //Eliminar un mutex: pthread_mutex_destroy()
+    pthread_mutex_destroy(&mutex);
     // Mi trabajo ya esta hecho ...
     pthread_exit(NULL);
 }
