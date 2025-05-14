@@ -33,13 +33,28 @@ struct params {
 static void* producer(void *p)
 {
     int i = 0;
+    
+    // productor
+    // produce el item -> down (vacios)
+    // pone item en *buffer -> up(llenos)
+    int item;
 
     struct params *params = (struct params*) p;
-
+    // printf("Entra en el productor\n");
     for (i = 0; i < params->items; i++) {
-        params->buf->buf[i % params->buf->size] = i;
+        item = i;
+        sem_wait(&empty);
+        pthread_mutex_lock(&mutex);
+
+        params->buf->buf[i % params->buf->size] = item;
         // Espera una cantidad aleatoria de microsegundos.
         usleep(rand() % params->wait_prod);
+        
+        printf("Produce %i y lo coloca en %i\n", i,i);
+        fflush(stdout);
+    
+        pthread_mutex_unlock(&mutex);
+        sem_post(&full);
     }
 
     pthread_exit(0);
@@ -50,15 +65,28 @@ static void* consumer(void *p)
 {
     int i;
 
+    // consumidor
+    //  down(llenos) -> retira item
+    // up(vacios) -> vuelve a down
+
     struct params *params = (struct params*) p;
 
     // Reserva memoria para guardar lo que lee el consumidor.
     int *reader_results = (int*) malloc(sizeof(int)*params->items);
-
+    // printf("Entra el consumidor\n");
     for (i = 0; i < params->items; i++) {
+        sem_wait(&full);
+        pthread_mutex_lock(&mutex);
+
         reader_results[i] = params->buf->buf[i % params->buf->size];
         // Espera una cantidad aleatoria de microsegundos.
         usleep(rand() % params->wait_cons);
+
+        printf("Consume %i\n",reader_results[i]);
+        fflush(stdout);
+
+        pthread_mutex_unlock(&mutex);
+        sem_post(&empty);
     }
 
     // Imprime lo que leyo
@@ -146,24 +174,15 @@ int main(int argc, char** argv)
     // Crea productor y consumidor
     pthread_create(&producer_t, NULL, producer, params);
     pthread_create(&consumer_t, NULL, consumer, params);
-
-    // despues de crear los hilos producer y consumer
-
+    
 
     
-    // consumidor
-    //  down(llenos) -> retira item
-    // up(vacios) -> vuelve a down
-    // productor
-    // produce el item -> down (vacios)
-    // pone item en *buffer -> up(llenos)
-
-
     // Eliminar un semáforo: sem_destroy()
     sem_destroy(&full);
     sem_destroy(&empty);
     //Eliminar un mutex: pthread_mutex_destroy()
     pthread_mutex_destroy(&mutex);
+
     // Mi trabajo ya esta hecho ...
     pthread_exit(NULL);
 }
