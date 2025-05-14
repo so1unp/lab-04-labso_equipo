@@ -40,7 +40,7 @@ static void* producer(void *p)
     int item;
 
     struct params *params = (struct params*) p;
-    // printf("Entra en el productor\n");
+    printf("Entra en el productor\n");
     for (i = 0; i < params->items; i++) {
         item = i;
         sem_wait(&empty);
@@ -73,7 +73,7 @@ static void* consumer(void *p)
 
     // Reserva memoria para guardar lo que lee el consumidor.
     int *reader_results = (int*) malloc(sizeof(int)*params->items);
-    // printf("Entra el consumidor\n");
+    printf("Entra el consumidor\n");
     for (i = 0; i < params->items; i++) {
         sem_wait(&full);
         pthread_mutex_lock(&mutex);
