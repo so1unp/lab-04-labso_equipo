@@ -33,26 +33,18 @@ struct params {
 static void* producer(void *p)
 {
     int i = 0;
-    
-    // productor
-    // produce el item -> down (vacios)
-    // pone item en *buffer -> up(llenos)
-    int item;
 
     struct params *params = (struct params*) p;
     printf("Entra en el productor\n");
     for (i = 0; i < params->items; i++) {
-        item = i;
+        
         sem_wait(&empty);
         pthread_mutex_lock(&mutex);
 
-        params->buf->buf[i % params->buf->size] = item;
+        params->buf->buf[i % params->buf->size] = i;
         // Espera una cantidad aleatoria de microsegundos.
         usleep(rand() % params->wait_prod);
         
-        printf("Produce %i y lo coloca en %i\n", i,i);
-        fflush(stdout);
-    
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
     }
@@ -64,10 +56,6 @@ static void* producer(void *p)
 static void* consumer(void *p)
 {
     int i;
-
-    // consumidor
-    //  down(llenos) -> retira item
-    // up(vacios) -> vuelve a down
 
     struct params *params = (struct params*) p;
 
@@ -81,9 +69,6 @@ static void* consumer(void *p)
         reader_results[i] = params->buf->buf[i % params->buf->size];
         // Espera una cantidad aleatoria de microsegundos.
         usleep(rand() % params->wait_cons);
-
-        printf("Consume %i\n",reader_results[i]);
-        fflush(stdout);
 
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
@@ -165,22 +150,18 @@ int main(int argc, char** argv)
     // Inicializa semilla para números pseudo-aleatorios.
     srand(getpid());
 
-    // Inicializar un semáforo: sem_init()
+    // Inicializar semaforos y mutex
     sem_init(&full,0,0); // semaforo llenos inicial = 0
     sem_init(&empty,0,buf->size);  // semaforo vacios inicial = size buffer
-    // Crear un mutex: pthread_mutex_init()
     pthread_mutex_init(&mutex, NULL);
 
     // Crea productor y consumidor
     pthread_create(&producer_t, NULL, producer, params);
     pthread_create(&consumer_t, NULL, consumer, params);
     
-
-    
-    // Eliminar un semáforo: sem_destroy()
+    // Eliminar un semáforo y mutex
     sem_destroy(&full);
     sem_destroy(&empty);
-    //Eliminar un mutex: pthread_mutex_destroy()
     pthread_mutex_destroy(&mutex);
 
     // Mi trabajo ya esta hecho ...
