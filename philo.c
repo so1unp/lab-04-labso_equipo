@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <semaphore.h>
 
 // Mueve el cursor a la linea x, columna y (ver codigos ANSI).
 #define xy(x, y) printf("\033[%d;%dH", x, y)
@@ -28,6 +29,8 @@ int segs_come = 1;
 
 // Mutex
 static pthread_mutex_t screen = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+sem_t tenedor[N];
 
 // Imprime en la posición (x,y) la cadena *fmt.
 void print(int y, int x, const char *fmt, ...)
@@ -59,19 +62,25 @@ void eat(int id)
     for (i = 0; i < 2; i++) {
         if (!i) {
             clear_eol(id);
-	    }
-
+	    }  
+        // bloquea? 
+        sem_wait(&tenedor[f[i]]);
         print(id, 18 + (f[i] != id) * 12, "tenedor%d", f[i]);
 
         // Espera para tomar el segundo tenedor.
         sleep(3);
     }
-
+    pthread_mutex_lock(&mutex);
     // Come durante un tiempo.
     for (i = 0, ration = 3 + rand() % 8; i < ration; i++) {
         print(id, 40 + i * 4, "ñam");
         sleep(1 + (rand() % segs_come));
     }
+    pthread_mutex_unlock(&mutex);
+    // si tomo dos semaforos tenedores, entonces una iteracion para levantar los semaforos
+    for (i = 0; i < 2; i++) {
+        sem_post(&tenedor[f[i]]);
+    }   
 }
 
 // El filosofo piensa.
@@ -136,9 +145,16 @@ int main(int argc, char* argv[])
 
     for (i = 0; i < N; i++) {
         id[i] = i;
+        sem_init(&tenedor[i], 0, 1);
         pthread_create(tid + i, 0, filosofo, id + i);
     }
-
+    pthread_mutex_init(&mutex, NULL);
+    for (i = 0; i < N; i++)
+    {
+        sem_destroy(&tenedor[i]);
+    }
+    
+    pthread_mutex_destroy(&mutex);
     pthread_exit(0);
 }
 
