@@ -43,7 +43,7 @@ static void* producer(void *p)
 
         params->buf->buf[i % params->buf->size] = i;
         // Espera una cantidad aleatoria de microsegundos.
-        usleep(rand() % params->wait_prod);
+        usleep((__useconds_t)(rand() % params->wait_prod));
         
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
@@ -60,7 +60,7 @@ static void* consumer(void *p)
     struct params *params = (struct params*) p;
 
     // Reserva memoria para guardar lo que lee el consumidor.
-    int *reader_results = (int*) malloc(sizeof(int)*params->items);
+    int *reader_results = (int*) malloc(sizeof(int)*(size_t)params->items);
     
     for (i = 0; i < params->items; i++) {
         sem_wait(&full);
@@ -68,7 +68,7 @@ static void* consumer(void *p)
 
         reader_results[i] = params->buf->buf[i % params->buf->size];
         // Espera una cantidad aleatoria de microsegundos.
-        usleep(rand() % params->wait_cons);
+        usleep((__useconds_t)(rand() % params->wait_prod));
 
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     }
 
     // Crea el buffer
-    buf->buf = (int*) malloc(sizeof(int) * buf->size);
+    buf->buf = (int*) malloc(sizeof(int) *(size_t) buf->size);
     if (buf->buf == NULL) {
         perror("malloc");
         exit(EXIT_FAILURE);
@@ -148,11 +148,11 @@ int main(int argc, char** argv)
     }
 
     // Inicializa semilla para números pseudo-aleatorios.
-    srand(getpid());
+    srand((unsigned int)getpid());
 
     // Inicializar semaforos y mutex
     sem_init(&full,0,0); // semaforo llenos inicial = 0
-    sem_init(&empty,0,buf->size);  // semaforo vacios inicial = size buffer
+    sem_init(&empty,0,(unsigned int)buf->size);  // semaforo vacios inicial = size buffer
     pthread_mutex_init(&mutex, NULL);
 
     // Crea productor y consumidor
