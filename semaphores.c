@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
             }
             // abrir el semaforo
             if((semaforo=sem_open(argv[2], 0))==SEM_FAILED) {
-                fprintf(stderr,"No se pudo abrir el semáforo: %s",argv[2]);
+                fprintf(stderr,"No se pudo abrir el semáforo: %s\n",argv[2]);
                 exit(EXIT_FAILURE);
             }
             // logica de modificar
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
             }
             // abrir el semaforo
             if((semaforo=sem_open(argv[2],0))==SEM_FAILED) {
-                fprintf(stderr,"No se pudo abrir el semáforo: %s",argv[2]);
+                fprintf(stderr,"No se pudo abrir el semáforo: %s\n",argv[2]);
                 exit(EXIT_FAILURE);
             }
             // logica de modificar
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
                 exit(EXIT_FAILURE);
             }
             if (sem_unlink(argv[2]) < 0) {
-                fprintf(stderr,"error al borrar el semáforo %s",argv[2]); 
+                fprintf(stderr,"error al borrar el semáforo %s\n",argv[2]); 
                 exit(EXIT_FAILURE);
             }
             printf("Semaforo %s eliminado\n",argv[2]);
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         case 'i':
             // abrir el semaforo
             if((semaforo=sem_open(argv[2], 0))==SEM_FAILED) {
-                fprintf(stderr,"No se pudo abrir el semáforo: %s",argv[2]);
+                fprintf(stderr,"No se pudo abrir el semáforo: %s\n",argv[2]);
                 exit(EXIT_FAILURE);
             }
             // consulta estado

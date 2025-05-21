@@ -42,11 +42,11 @@ static void* producer(void *p)
         pthread_mutex_lock(&mutex);
 
         params->buf->buf[i % params->buf->size] = i;
-        // Espera una cantidad aleatoria de microsegundos.
-        usleep((__useconds_t)(rand() % params->wait_prod));
-        
+        // Espera una cantidad aleatoria de microsegundos.        
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
+
+        usleep((__useconds_t)(rand() % params->wait_prod));
     }
 
     pthread_exit(0);
@@ -67,11 +67,11 @@ static void* consumer(void *p)
         pthread_mutex_lock(&mutex);
 
         reader_results[i] = params->buf->buf[i % params->buf->size];
-        // Espera una cantidad aleatoria de microsegundos.
-        usleep((__useconds_t)(rand() % params->wait_prod));
-
+        // Espera una cantidad aleatoria de microsegundos.        
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
+
+        usleep((__useconds_t)(rand() % params->wait_prod));
     }
 
     // Imprime lo que leyo

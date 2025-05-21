@@ -93,7 +93,7 @@ void eat(int id)
     // Come durante un tiempo.
     for (i = 0, ration = 3 + rand() % 8; i < ration; i++) {
         print(id, 40 + i * 4, "ñam");
-        sleep(1 + (rand() % segs_come));
+        sleep( (unsigned int) (1 + (rand() % segs_come)) );
     }
 
     // Libera los tenedores
@@ -121,7 +121,7 @@ void think(int id)
                 sleep(1);
         }
 
-        sleep(1 + rand() % segs_piensa);
+        sleep( (unsigned int) (1 + rand() % segs_piensa) );
     } while (t);
 }
 
@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    srand(getpid());
+    srand( (unsigned int) getpid());
 
     clear();
 
