@@ -1,6 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <fcntl.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <mqueue.h>
+
+#define QUEUE_PERMISSIONS 0664
+#define MSG_BUFFER_SIZE MAX_MSG_SIZE+10
+
+
 #define USERNAME_MAXSIZE    15  // Máximo tamaño en caracteres del nombre del remitente.
 #define TXT_SIZE            100 // Máximo tamaño del texto del mensaje.
 
@@ -34,6 +44,10 @@ void usage(char *argv[])
 
 int main(int argc, char *argv[])
 {
+    mqd_t cola;                  //descriptor de la cola
+    struct mq_attr attr;         //atributos de la cola
+    int mqsize, msgsize;
+ 
     if (argc < 2) {
         usage(argv);
         exit(EXIT_FAILURE);
@@ -60,10 +74,17 @@ int main(int argc, char *argv[])
             printf("Escucha indefinidamente por mensajes\n");
             break;
         case 'c':
+            printf ("Va a crear la cola %s\n",argv[2]);
+            if (cola = mq_open(argv[2], O_CREAT, QUEUE_PERMISSIONS) < 0){
+                perror("no se pudo crear la cola de mensajes.\n");
+                exit(1);
+            }
             printf("Crea la cola de mensajes %s\n", argv[2]);
             break;
         case 'd':
             printf("Borra la cola de mensajes %s\n", argv[2]);
+            mq_unlink(argv[2]);
+            printf ("Se ha eliminado la cola %s\n",argv[2]);
             break;
         case 'h':
             usage(argv);
