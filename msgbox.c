@@ -45,10 +45,9 @@ void usage(char *argv[])
 int main(int argc, char *argv[])
 {
     mqd_t cola;                  //descriptor de la cola
-    struct mq_attr attr;         //atributos de la cola
-    int mqsize, msgsize;
- 
-    if (argc < 2) {
+    int prio = 0;
+  char buff[256];
+  if (argc < 2) {
         usage(argv);
         exit(EXIT_FAILURE);
     }
@@ -63,6 +62,17 @@ int main(int argc, char *argv[])
     switch(option) {
         case 's':
             printf("Enviar %s a la cola %s\n", argv[3], argv[2]);
+            if ((cola = mq_open (argv[2],  O_RDWR )) == -1) { 
+                perror("No se puede acceder a la cola de mensajes"); 
+                exit(1); 
+            }
+            sprintf (buff, "%s", argv[2]);
+            if (mq_send(cola, buff, strlen (buff),(unsigned int)prio) == -1) {
+                perror("Error al enviar el mensaje"); 
+                exit(1); 
+            }
+                printf("Se envió el mensaje a la cola %s \n",argv[2]);
+                mq_close(cola);
             break;
         case 'r':
             printf("Recibe el primer mensaje en %s\n", argv[2]);
@@ -75,11 +85,12 @@ int main(int argc, char *argv[])
             break;
         case 'c':
             printf ("Va a crear la cola %s\n",argv[2]);
-            if (cola = mq_open(argv[2], O_CREAT, QUEUE_PERMISSIONS) < 0){
+            if ((cola = mq_open(argv[2], O_CREAT, QUEUE_PERMISSIONS)) < 0){
                 perror("no se pudo crear la cola de mensajes.\n");
                 exit(1);
             }
             printf("Crea la cola de mensajes %s\n", argv[2]);
+            mq_close(cola);
             break;
         case 'd':
             printf("Borra la cola de mensajes %s\n", argv[2]);
