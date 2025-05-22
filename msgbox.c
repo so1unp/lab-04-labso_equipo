@@ -8,6 +8,7 @@
 #include <mqueue.h>
 
 #define QUEUE_PERMISSIONS 0664
+#define MAX_MSG_SIZE 1024
 #define MSG_BUFFER_SIZE MAX_MSG_SIZE+10
 
 
@@ -44,10 +45,17 @@ void usage(char *argv[])
 
 int main(int argc, char *argv[])
 {
-    mqd_t cola;                  //descriptor de la cola
-    int prio = 0;
-  char buff[256];
-  if (argc < 2) {
+    mqd_t cola;
+    unsigned int prio;
+    char buff[MAX_MSG_SIZE];
+
+    struct mq_attr attr;
+    attr.mq_flags = 0;  
+    attr.mq_maxmsg = 10;  
+    attr.mq_msgsize = 33;  
+    attr.mq_curmsgs = 0;  
+
+    if (argc < 2) {
         usage(argv);
         exit(EXIT_FAILURE);
     }
@@ -62,20 +70,40 @@ int main(int argc, char *argv[])
     switch(option) {
         case 's':
             printf("Enviar %s a la cola %s\n", argv[3], argv[2]);
-            if ((cola = mq_open (argv[2],  O_RDWR )) == -1) { 
+            if ((cola = mq_open (argv[2],  O_RDWR )) < 0) { 
                 perror("No se puede acceder a la cola de mensajes"); 
                 exit(1); 
             }
-            sprintf (buff, "%s", argv[2]);
-            if (mq_send(cola, buff, strlen (buff),(unsigned int)prio) == -1) {
+            sprintf (buff, "%s", argv[3]);
+            prio = (argc > 4) ? atoi(argv[5]): 0;
+            if (mq_send(cola, buff, strlen (buff), prio) < 0) {
                 perror("Error al enviar el mensaje"); 
                 exit(1); 
             }
                 printf("Se envió el mensaje a la cola %s \n",argv[2]);
-                mq_close(cola);
+                  mq_close(cola);
             break;
         case 'r':
             printf("Recibe el primer mensaje en %s\n", argv[2]);
+            if ((cola = mq_open (argv[2],  O_RDONLY )) < 0) { 
+                perror("No se puede acceder a la cola de mensajes"); 
+                exit(EXIT_FAILURE);
+            }
+            if (mq_getattr(cola, &attr) < 0) {
+                mq_close(cola);
+                perror("No se pudieron obtener los atributos de la cola");
+                exit(EXIT_FAILURE);
+            }
+            prio = (argc > 3) ? atoi(argv[4]): 0;
+            ssize_t leidos;
+            if ((leidos = mq_receive(cola, buff, sizeof(buff)+10,prio)) < 0) {
+                mq_close(cola);
+                perror("Error al enviar el mensaje"); 
+                exit(1); 
+            }
+            // buff[leidos] = '\0';
+            printf("Se recibió el mensaje [%s] \n",buff);    
+            mq_close(cola);
             break;
         case 'a':
             printf("Imprimer todos los mensajes en %s\n", argv[2]);
@@ -85,7 +113,7 @@ int main(int argc, char *argv[])
             break;
         case 'c':
             printf ("Va a crear la cola %s\n",argv[2]);
-            if ((cola = mq_open(argv[2], O_CREAT, QUEUE_PERMISSIONS)) < 0){
+            if ((cola = mq_open(argv[2], O_CREAT, QUEUE_PERMISSIONS,&attr)) < 0){
                 perror("no se pudo crear la cola de mensajes.\n");
                 exit(1);
             }
